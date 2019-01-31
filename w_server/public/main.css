@@ -1,0 +1,4 @@
+.video-output,
+.video-input {
+  transform: scaleX(-1)
+}

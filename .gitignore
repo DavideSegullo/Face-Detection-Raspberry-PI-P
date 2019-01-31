@@ -1,0 +1,14 @@
+.idea/misc.xml
+.idea/modules.xml
+.idea/ticketag.iml
+.idea/workspace.xml
+.idea/vcs.xml
+plugins/node_modules
+.sass-cache/
+*.map
+watcherTasks.xml
+node_modules
+dist
+.idea
+*.pem
+*.crs

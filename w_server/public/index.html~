@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+ <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<h1>Face Detection</h1>
+<!-- <p><input type="checkbox" id="light"/></p> -->
+
+<!-- Raw camera stream -->
+<video class="video-input" id="videoInput"></video>
+<canvas id="canvasFrame"></canvas>
+<canvas id="canvasOutput"></canvas>
+
+<script src="socket.io.js"></script>
+<!-- <script src="opencv.js"></script> -->
+<script src="https://docs.opencv.org/4.0.1/opencv.js"></script>
+<script>
+/*var socket = io(); //load socket.io-client and connect to the host that serves the page
+
+window.addEventListener("load", function(){ //when page loads
+  var lightbox = document.getElementById("light"); 
+  lightbox.addEventListener("change", function() { //add event listener for when checkbox changes
+    socket.emit("light", Number(this.checked)); //send button status to server (as 1 or 0)
+  });
+});
+socket.on('light', function (data) { //get button status from client
+  document.getElementById("light").checked = data; //change checkbox according to push button on Raspberry Pi
+  socket.emit("light", data); //send push button status to back to server
+});*/
+
+let video = document.getElementById('videoInput');
+
+navigator.mediaDevices.getUserMedia({video: true, audio: false})
+	.then(function(stream) {
+	  video.srcObject = stream;
+	  video.play();
+	})
+	.catch(function(err) {
+	  console.log("Errore durante il caricamento del buffer video" + err);
+	});
+
+let canvasFrame = document.getElementById('canvasFrame');
+let context = canvasFrame.getContext('2d');
+let src = new cv.Mat(height, width, cv.CV_8UC4);
+let dst = new cv.Mat(height, width, cv.CV_8UC1);
+const FPS = 30;
+function processVideo() {
+    let begin = Date.now();
+    context.drawImage(video, 0, 0, width, height);
+    src.data.set(context.getImageData(0, 0, width, height).data);
+    cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+    cv.imshow("canvasOutput", dst); // canvasOutput is the id of another <canvas>;
+    // schedule next one.
+    let delay = 1000/FPS - (Date.now() - begin);
+    setTimeout(processVideo, delay);
+}
+// schedule first one.
+setTimeout(processVideo, 0);
+
+</script>
+</body>
+</html>
