@@ -2,3 +2,7 @@
 .video-input {
   transform: scaleX(-1)
 }
+
+.video-input::after {
+  content: ' '
+}

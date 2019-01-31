@@ -60,8 +60,19 @@ function handler (req, res) {
   }
 }
 
-const pngPrefix = 'data:image/png;base64,';
-const jpgPrefix = 'data:image/jpeg;base64,';
+//const pngPrefix = 'data:image/png;base64,';
+//const jpgPrefix = 'data:image/jpeg;base64,';
+
+const drawRect = (image, rect, color, opts = {thickness: 2}) => 
+    image.drawRectangle(
+      rect,
+      color,
+      opts.thickness,
+      cv.LINE_8
+    );
+
+const drawBlueRect = (image, rect, opts = {thickness: 2}) =>
+   drawRect(image, rect, new cv.Vec(255, 0, 0), opts);
 
 io.sockets.on('connection', function(socket) {
   socket.on('rawVideo', function(data) {
@@ -72,16 +83,35 @@ io.sockets.on('connection', function(socket) {
     const buffer = Buffer.from(base64data, 'base64');
     //CV MAT
     const img = cv.imdecode(buffer);
-    console.log(img);
+//    console.log(img);
     //CV IMG
-    const cvImg = fr.CvImage(img);
+   /* const cvImg = fr.CvImage(img);
     const detector = fr.FaceDetector();
     const faceRects = detector.locateFaces(cvImg);
-
-    const faces = faceRects.map(mmodRect => fr.toCvRect(mmodRect.rect))
-	.map(cvRect => img.getRegion(cvRect).copy());
+    console.log(faceRects);
+    socket.emit("rawVideo", faceRects[0]);
+    //const faces = faceRects.map(mmodRect => fr.toCvRect(mmodRect.rect))
+      //  .map(cvRect => img.getRegion(cvRect).copy());
+    //console.log(faces);*/
    
-    console.log(faces.length);
+    const classifier = new cv.CascadeClassifier(cv.HAAR_FRONTALFACE_ALT2);
+    const { objects, numDetections } = classifier.detectMultiScale(img.bgrToGray());
+    console.log('faceRects:', objects);
+    console.log('confidences:', numDetections);
+   
+    if (objects.length) {
+      const numDetectionsTh = 10;
+      
+      objects.forEach((rect, i) => {
+        const thickness = numDetections[i] < numDetectionsTh ? 1 : 2;
+        drawBlueRect(img, rect, {thickness});
+      });
+
+      //console.log(img);
+      const outBase64 = cv.imencode('.jpg', img).toString('base64'); //Conversione da Mat a base64
+      //console.log(outBase64);
+      socket.emit("resultFrame", "data:image/png;base64, " + outBase64); 
+   }
   });
 });
 
@@ -95,39 +125,3 @@ io.sockets.on('connection', function (socket) {// WebSocket Connection
     //}
   });
 });*/
-
-/*
-// camera properties
-var camWidth = 320;
-var camHeight = 240;
-var camFps = 30;
-var camInterval = 1000 / camFps;
-
-// face detection properties
-var rectColor = [0, 255, 0];
-var rectThickness = 2;
-
-// initialize camera
-var camera = new cv.VideoCapture(0);
-camera.setWidth(camWidth);
-camera.setHeight(camHeight);
-
-module.exports = function (socket) {
-  setInterval(function() {
-    camera.read(function(err, im) {
-      if (err) throw err;
-
-      im.detectObject('./node_modules/opencv/data/haarcascade_frontalface_alt2.xml', {}, function(err, faces) {
-        if (err) throw err;
-
-        for (var i = 0; i < faces.length; i++) {
-          face = faces[i];
-          im.rectangle([face.x, face.y], [face.width, face.height], rectColor, rectThickness);
-        }
-
-        socket.emit('frame', { buffer: im.toBuffer() });
-      });
-    });
-  }, camInterval);
-};
-*/

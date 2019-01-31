@@ -10,7 +10,7 @@
 
 <!-- Raw camera stream -->
 <video width="640" height="480" class="video-input" id="videoInput"></video>
-<canvas id="canvasOutput" class="video-output"></canvas>
+<canvas width="640" height="480" id="canvasOutput" class="video-output"></canvas>
 
 <script src="socket.io.js"></script>
 <!-- <script src="opencv.js"></script> -->
@@ -52,15 +52,23 @@ let src = new cv.Mat(height, width, cv.CV_8UC4);
 let dst = new cv.Mat(height, width, cv.CV_8UC1);
 let cap = new cv.VideoCapture(video);
 
-const FPS = 1;
+const FPS = 30;
 
 var ctx = document.getElementById("canvasOutput").getContext("2d");
 
-socket.on("rawVideo", function(data) {
+socket.on("resultFrame", function(data) {
   //console.log(data);
   var img = new Image();
+   
+  img.onload = function() {
+     ctx.drawImage(img, 0, 0);
+  };
+
   img.src = data;
-  ctx.drawImage(img, 0, 0);
+  //img.src = data;
+  //ctx.drawImage(img, 0, 0);
+
+  //console.log(ctx);
 });
 
 //In base agli FPS setto un delay e invio il frame corrente della camera al server
@@ -73,6 +81,7 @@ function processVideo() {
     var canvas = document.createElement("canvas");
         canvas.getContext('2d')
             .drawImage(video, 0, 0, canvas.width, canvas.height);
+    console.log(canvas.width);
 //    console.log(canvas.toDataURL());
     socket.emit("rawVideo", canvas.toDataURL());  
     let delay = 1000/FPS - (Date.now() - begin);
